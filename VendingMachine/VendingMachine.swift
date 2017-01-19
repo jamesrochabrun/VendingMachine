@@ -153,6 +153,7 @@ class FoodVendingMachine: VendingMachine {
     }
     
     func item(forSelection selection: VendingSelection) -> VendingItem? {
+        //here selection is a key like gum
         return self.inventory[selection]
     }
 

@@ -18,10 +18,11 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     @IBOutlet weak var balanceLabel: UILabel!
     @IBOutlet weak var quantityLabel: UILabel!
     @IBOutlet weak var priceLabel: UILabel!
+    @IBOutlet weak var stepper: UIStepper!
+    
     
     let vendingMachine: VendingMachine
     var curretSelection: VendingSelection?
-    var quantity = 1
     
     //initializing the vendingMachine property inthe decoder method
     required init?(coder aDecoder: NSCoder) {
@@ -41,10 +42,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
        // print(vendingMachine.inventory)
-        setupCollectionViewCells()
-        self.balanceLabel.text = "$\(self.vendingMachine.amountDeposited)"
-        self.totalLabel.text = "$00.00"
-        self.priceLabel.text = "$0.00"
+        self.setupCollectionViewCells()
+        self.updateDisplayWith(balance: self.vendingMachine.amountDeposited, totalPrice: 0, itemPrice: 0, itemQuantity: 1)
     }
 
     override func didReceiveMemoryWarning() {
@@ -76,8 +75,8 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if let currentSelection = self.curretSelection {
             
             do {
-                try self.vendingMachine.vend(selection: currentSelection , quantity: self.quantity)
-                self.updateDisplay()
+                try self.vendingMachine.vend(selection: currentSelection , quantity: Int(self.stepper.value))
+                self.updateDisplayWith(balance: self.vendingMachine.amountDeposited, totalPrice: 0.00, itemPrice: 0, itemQuantity: 1)
             } catch {
                 //FXIME: error handler
             }
@@ -92,12 +91,41 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         }
     }
     
-    func updateDisplay() {
-        self.balanceLabel.text = "$\(self.vendingMachine.amountDeposited)"
-        self.totalLabel.text = "$00.00"
-        self.priceLabel.text = "$0.00"
+    func updateDisplayWith(balance: Double? = nil, totalPrice: Double? = nil, itemPrice: Double? = nil, itemQuantity: Int? = nil) {
+        
+        if let balanceValue = balance {
+            self.balanceLabel.text = "$\(balanceValue)"
+        }
+        
+        if let totalValue = totalPrice {
+            self.totalLabel.text = "$\(totalValue)"
+        }
+        
+        if let priceValue = itemPrice {
+            self.priceLabel.text = "$\(priceValue)"
+        }
+        
+        if let quantityValue = itemQuantity {
+            self.quantityLabel.text = "\(quantityValue)"
+        }
     }
-
+    
+    func updateTotalPrice(for item:VendingItem) {
+      
+        let totalPrice = item.price * self.stepper.value
+        updateDisplayWith(totalPrice:totalPrice)
+    }
+    
+    @IBAction func updateQuantity(_ sender: UIStepper) {
+        
+        let quantity = Int(self.stepper.value)
+        self.updateDisplayWith(itemQuantity:quantity)
+        
+        if let currentSelection = self.curretSelection, let item = self.vendingMachine.item(forSelection: currentSelection) {
+            updateTotalPrice(for: item)
+        }
+    }
+    
     
     // MARK: UICollectionViewDataSource
     
@@ -117,10 +145,16 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         updateCell(having: indexPath, selected: true)
         
+        //updating the values "refreshing"
+        self.stepper.value = 1
+        self.updateDisplayWith(totalPrice: 0, itemQuantity: 1)
         self.curretSelection = self.vendingMachine.selection[indexPath.row]
+        
         if let curretSelection = self.curretSelection, let item = self.vendingMachine.item(forSelection: curretSelection) {
-            self.priceLabel.text = "$\(item.price)"
-            self.totalLabel.text = "$\(item.price * Double(self.quantity))"
+            
+            let totalPrice = item.price * self.stepper.value
+            self.updateDisplayWith(totalPrice: totalPrice, itemPrice: item.price)
+    
         }
     }
     
