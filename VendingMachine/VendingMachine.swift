@@ -150,6 +150,7 @@ class FoodVendingMachine: VendingMachine {
     }
     
     func deposit(_ amount: Double) {
+        self.amountDeposited += amount
     }
     
     func item(forSelection selection: VendingSelection) -> VendingItem? {

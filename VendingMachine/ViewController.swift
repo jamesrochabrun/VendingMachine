@@ -76,9 +76,20 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
             
             do {
                 try self.vendingMachine.vend(selection: currentSelection , quantity: Int(self.stepper.value))
-                self.updateDisplayWith(balance: self.vendingMachine.amountDeposited, totalPrice: 0.00, itemPrice: 0, itemQuantity: 1)
-            } catch {
-                //FXIME: error handler
+                self.updateDisplayWith(balance: self.vendingMachine.amountDeposited, totalPrice: 0.0, itemPrice: 0, itemQuantity: 1)
+            } catch VendingMachineError.outOfStock {
+                self.showAlertWith(title: "out of stock", message: "this item is unavailable")
+                
+            } catch VendingMachineError.invalidSelection {
+                self.showAlertWith(title: "Invalid selection", message: "please make another selection")
+                
+                //the required comes from the helper method in the model and its like a "success response"
+            } catch VendingMachineError.insufficientFunds(let required) {
+                let message = "you need $\(required) to complete transaction"
+                self.showAlertWith(title: "insufficient Funds", message: message)
+                
+            }  catch let error {
+                fatalError("\(error)")
             }
             
             if let indexPath = collectionView.indexPathsForSelectedItems?.first {
@@ -124,6 +135,28 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
         if let currentSelection = self.curretSelection, let item = self.vendingMachine.item(forSelection: currentSelection) {
             updateTotalPrice(for: item)
         }
+    }
+    
+    func showAlertWith(title: String, message: String, style: UIAlertControllerStyle = .alert) {
+        
+        let alertController = UIAlertController(title: title, message: message, preferredStyle: style)
+        let action = UIAlertAction(title: "ok", style: .default, handler: self.dismsissAlert)
+        alertController.addAction(action)
+        self.present(alertController, animated: true, completion: nil)
+    }
+    
+    //for the completion handler in the alert action
+    func dismsissAlert(sender: UIAlertAction) -> Void {
+
+        DispatchQueue.main.async {
+            self.updateDisplayWith(balance: 0, totalPrice: 0, itemPrice: 0, itemQuantity: 1)
+        }
+    }
+    
+    
+    @IBAction func depositFunds(_ sender: UIButton) {
+        self.vendingMachine.deposit(5.0)
+        self.updateDisplayWith(balance:self.vendingMachine.amountDeposited)
     }
     
     
