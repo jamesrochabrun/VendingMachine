@@ -9,7 +9,12 @@
 import UIKit
 
 fileprivate let reuseIdentifier = "vendingItem"
+fileprivate let fileTitle = "VendingInventory"
 fileprivate let screenWidth = UIScreen.main.bounds.width
+
+enum FileType: String {
+    case plist
+}
 
 class ViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
     
@@ -28,7 +33,7 @@ class ViewController: UIViewController, UICollectionViewDataSource, UICollection
     required init?(coder aDecoder: NSCoder) {
         do {
             //returns nsdictionary
-            let dictionary = try PlistConverter.dictionary(fromFile: "VendingInventory", ofType: "plist")
+            let dictionary = try PlistConverter.dictionary(fromFile: fileTitle, ofType: FileType.plist.rawValue)
             //downcast to dictionary
             let inventory = try InventoryUnarchiver.vendingInventory(fromDictionary: dictionary)
             self.vendingMachine = FoodVendingMachine(inventory: inventory)
